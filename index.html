@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar Cita</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 25px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        header img {
+            width: 80px;
+            margin-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: #004DA7;
+            margin: 0;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            font-size: 0.95rem;
+            color: #004DA7;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            font-size: 0.95rem;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            outline: none;
+            transition: border 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #12DBC6;
+            box-shadow: 0 0 6px rgba(18, 219, 198, 0.5);
+        }
+
+        button.btn {
+            width: 100%;
+            background: linear-gradient(90deg, #004DA7, #12DBC6);
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        button.btn:hover {
+            background: linear-gradient(90deg, #003D8C, #10BBA8);
+            transform: scale(1.02);
+        }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            display: none;
+            text-align: center;
+        }
+
+        .popup h2 {
+            font-size: 1.2rem;
+            color: #004DA7;
+            margin-bottom: 10px;
+        }
+
+        .popup p {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .popup button {
+            background: #12DBC6;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .popup button:hover {
+            background: #10BBA8;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 5;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.png" alt="Logo">
+            <h1>Agenda tu Cita</h1>
+            <p>Consulta Medicina Regenerativa</p>
+        </header>
+        <form id="appointmentForm">
+            <div class="form-group">
+                <label for="firstName">Nombre</label>
+                <input type="text" id="firstName" name="firstName" required>
+            </div>
+            <div class="form-group">
+                <label for="lastName">Apellido</label>
+                <input type="text" id="lastName" name="lastName" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Teléfono</label>
+                <input type="text" id="phone" name="phone" maxlength="9" required oninput="validatePhone(event)">
+            </div>
+            <div class="form-group">
+                <label for="service">Servicio</label>
+                <select id="service" name="service" required>
+                    <option value="">Selecciona</option>
+                    <option value="Consulta Medicina Regenerativa">Consulta Medicina Regenerativa</option>
+                    <option value="PRP">PRP</option>
+                    <option value="Ozonoterapia">Ozonoterapia</option>
+                    <option value="Quiropraxia">Quiropraxia</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date">Fecha</label>
+                <input type="date" id="date" name="date" required>
+            </div>
+            <div class="form-group">
+                <label for="time">Hora</label>
+                <select id="time" name="time" required>
+                    <option value="">Selecciona</option>
+                    <option value="8:00 AM">8:00 AM</option>
+                    <option value="10:00 AM">10:00 AM</option>
+                    <option value="2:00 PM">2:00 PM</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Agendar</button>
+        </form>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup">
+        <h2>¡Cita Registrada!</h2>
+        <p id="popupMessage"></p>
+        <button onclick="closePopup()">Aceptar</button>
+    </div>
+
+    <script>
+        // Validar solo números en teléfono
+        function validatePhone(event) {
+            const input = event.target;
+            input.value = input.value.replace(/[^0-9]/g, '');
+        }
+
+        // Formato de fecha y validación
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("date").setAttribute("min", today);
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+            return date.toLocaleDateString("es-ES", options).replace(/^\w/, c => c.toUpperCase());
+        }
+
+        // Mostrar popup
+        function showPopup(message) {
+            document.getElementById("popupMessage").textContent = message;
+            document.getElementById("overlay").style.display = "block";
+            document.getElementById("popup").style.display = "block";
+        }
+
+        function closePopup() {
+            document.getElementById("overlay").style.display = "none";
+            document.getElementById("popup").style.display = "none";
+        }
+
+        document.getElementById("appointmentForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const dateInput = document.getElementById("date").value;
+    const service = document.getElementById("service").value;
+
+    if (dateInput && service) {
+        // Convertir la fecha al formato solicitado con ajuste a zona horaria local
+        const dateParts = dateInput.split("-");
+        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        
+        const days = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+        const months = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio", 
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        ];
+
+        const formattedDate = `${days[date.getDay()]} ${date.getDate()} de ${months[date.getMonth()]} del ${date.getFullYear()}`;
+        
+        document.getElementById("popupMessage").textContent = `Tu cita para ${service} está registrada el ${formattedDate}.`;
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("popup").style.display = "block";
+    }
+});
+
+function closePopup() {
+    document.getElementById("overlay").style.display = "none";
+    document.getElementById("popup").style.display = "none";
+}
+
+    </script>
+    
+</body>
+</html>
